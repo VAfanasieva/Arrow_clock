@@ -1,0 +1,138 @@
+#!/bin/bash
+
+count_col=$(tput cols)
+count_lin=$(tput lines)
+
+current_hour=()
+current_minute=()
+current_second=()
+
+#const_chas=$(date +'%I')
+#const_min=$(date +'%M')
+#const_sec=$(date +'%S')
+
+if (($count_col < $count_lin)); then
+    Diametr=$count_col
+else
+    Diametr=$count_lin
+fi
+
+R=`echo "$Diametr/2" | bc`
+str=""
+
+
+pi=3.14159265358979
+for ((i = 0; i <= Diametr; i++)); do
+for ((j = 0; j <= Diametr; j++)); do
+        let "k = (i-R)*(i-R) + (j-R)*(j-R)"
+        let "sq = R * R - R"
+        let "sq1 = R * R + R"
+        if (($k > $sq)) && (($k < $sq1)); then
+                str+=" ."
+        elif (($k == ($sq + 1))); then
+                str+=" ."
+        elif (($k == ($sq - 1))); then
+                str+=" ."
+        else
+                str+="  "
+        fi
+done
+echo "$str"
+str=""
+done
+
+#flag=0
+
+while :
+do
+    chas=$(date +'%I')
+    min=$(date +'%M')
+    sec=$(date +'%S')
+
+    pr=`echo "($sec - 3)/$chas"  |  bc -l`
+    ocr=`printf "%.*f\n" 0 "$pr" 2> /dev/null`
+
+        # минутная стрелка
+
+    #if(($flag==0)) || [ "$const_min" -ne "$min" ]; then
+
+    for ((i = 0; i < ${#current_minute[*]}; i+=2)); do
+        tput cup ${current_minute[i]} ${current_minute[i + 1]}
+        echo -n "  "
+    done
+
+    current_minute=()
+    sin_min=`echo "s($pi/2 - $pi/30 * $min)" |  bc -l`
+    cos_min=`echo "c($pi/2 - $pi/30 * $min)" |  bc -l`
+
+   for ((i = 1; i <= R - 3; i++)); do
+        x_min=`echo "$R -  $i * $sin_min - 2" | bc -l`
+        y_min=`echo "($R + $i * $cos_min) * 2" | bc -l`
+        xm=`printf "%.*f\n" 0 "$x_min" 2> /dev/null`
+        ym=`printf "%.*f\n" 0 "$y_min" 2> /dev/null`
+        if (($xm >= 0)) && (($ym >= 0)); then
+            tput cup $xm $ym
+            echo -n " ."
+            current_minute+=($xm $ym)
+        fi
+    done
+        #const_min=$min
+    #fi
+
+
+    # секундная стрелка
+    #if(($flag==0)) || [ "$const_sec" -ne "$sec" ]; then
+    for ((i=0; i<${#current_second[*]}; i+=2)); do
+        tput cup ${current_second[i]} ${current_second[i + 1]}
+        echo -n "  "
+    done
+
+    current_second=()
+    sin_sec=`echo "s($pi/2 - $pi/30 * $sec)" |  bc -l`
+    cos_sec=`echo "c($pi/2 - $pi/30 * $sec)" |  bc -l`
+
+    for ((i = 1; i < R - 1; i++)); do
+        x_sec=`echo "$R -  $i * $sin_sec - 2" | bc -l`
+        y_sec=`echo "($R + $i * $cos_sec) * 2" | bc -l`
+        xs=`printf "%.*f\n" 0 "$x_sec" 2> /dev/null`
+        ys=`printf "%.*f\n" 0 "$y_sec" 2> /dev/null`
+        if (($xs >= 0)) && (($ys >= 0)); then
+            tput cup $xs $ys
+            echo -n " ."
+            current_second+=($xs $ys)
+        fi
+    done
+        #const_sec=$sec
+    #fi
+
+    #if(($flag==0)) || [ "$const_chas" -ne "$chas" ]; then
+
+    for ((i = 0; i < ${#current_hour[*]}; i+=2)); do
+        tput cup ${current_hour[i]} ${current_hour[i + 1]}
+        echo -n "  "
+    done
+
+    current_hour=()
+    sin_chas=`echo "s($pi/2 - $pi/6 * $chas)" |  bc -l`
+    cos_chas=`echo "c($pi/2 - $pi/6 * $chas)" |  bc -l`
+
+    for ((i = 1; i <= R - 6; i++)); do
+        x_chas=`echo "$R -  $i * $sin_chas - 2" | bc -l`
+        y_chas=`echo "($R + $i * $cos_chas) * 2" | bc -l`
+        xc=`printf "%.*f\n" 0 "$x_chas" 2> /dev/null`
+        yc=`printf "%.*f\n" 0 "$y_chas" 2> /dev/null`
+        if (($xc >= 0)) && (($yc >= 0)); then
+            tput cup $xc $yc
+            echo -n " ."
+            current_hour+=($xc $yc)
+        fi
+    done
+        #const_chas=$chas
+    #fi
+
+
+    let "flag++"
+    sleep 1
+
+done
+tput cup $count_lin 0
